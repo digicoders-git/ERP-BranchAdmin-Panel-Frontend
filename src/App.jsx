@@ -10,6 +10,8 @@ import ManageFees from "./Dashbord.jsx/ManageFees";
 import ManageClass from "./Dashbord.jsx/ManageClass";
 import ClassView from "./Dashbord.jsx/ClassView";
 import ManageSection from "./Dashbord.jsx/ManageSection";
+import AttendanceDashboard from "./Dashbord.jsx/AttendanceDashboard";
+import TimetableBuilder from "./Dashbord.jsx/TimetableBuilder";
 import Approval from "./Dashbord.jsx/Approval";
 import Login from "./Login";
 import Reports from "./Dashbord.jsx/Reports";
@@ -31,9 +33,11 @@ import RouteStops from "./Dashbord.jsx/RouteStops";
 import TransportAssignment from "./Dashbord.jsx/TransportAssignment";
 import TransportAllocation from "./Dashbord.jsx/TransportAllocation";
 import RouteCharges from "./Dashbord.jsx/RouteCharges";
+import SubstituteAssignment from "./Dashbord.jsx/SubstituteAssignment";
 
 import StaffProfile from "./Dashbord.jsx/StaffProfile";
 import BranchAdminProfile from "./Dashbord.jsx/BranchAdminProfile";
+import SchoolSettings from "./Dashbord.jsx/SchoolSettings";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("branchToken");
@@ -58,10 +62,15 @@ export default function App() {
           <Route path="manage-class" element={<ManageClass />} />
           <Route path="class-view/:id" element={<ClassView />} />
           <Route path="manage-section" element={<ManageSection />} />
+          <Route path="attendance" element={<AttendanceDashboard />} />
+          <Route path="timetable" element={<TimetableBuilder />} />
           <Route path="reports" element={<Reports />} />
           <Route path="profile" element={<BranchAdminProfile />} />
           <Route path="approval" element={<Approval />} />
           <Route path="mapping-fees" element={<MappingFees />} />
+          <Route path="school-settings/:section" element={<SchoolSettings />} />
+          <Route path="school-settings" element={<Navigate to="branding" replace />} />
+          <Route path="substitute-assignment" element={<SubstituteAssignment />} />
 
           <Route path="hostel" element={<Hostel />}>
             <Route index element={<HostelDashboard />} />

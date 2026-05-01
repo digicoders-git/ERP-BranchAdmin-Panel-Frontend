@@ -21,16 +21,17 @@ import {
   FaClipboardList,
   FaRupeeSign,
   FaUserCircle,
+  FaCalendarAlt,
+  FaUserEdit,
 } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { MdClose, MdDashboard } from "react-icons/md";
 
 const menuClass = ({ isActive }) =>
   `flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-300 font-medium relative group
-  ${
-    isActive
-      ? "bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-xl shadow-blue-500/25 scale-105"
-      : "text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102"
+  ${isActive
+    ? "bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-xl shadow-blue-500/25 scale-105"
+    : "text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102"
   }`;
 
 export default function MainDashBord() {
@@ -41,6 +42,11 @@ export default function MainDashBord() {
   const navigate = useNavigate();
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("branchUser") || "{}"));
   const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002';
+
+  // Helper function to check if panel is allowed
+  const isPanelAllowed = (panelName) => {
+    return user?.allowedPanels?.includes(panelName) || false;
+  };
 
   useEffect(() => {
     const handleProfileUpdate = () => {
@@ -123,193 +129,255 @@ export default function MainDashBord() {
             )}
           </NavLink>
 
-          <NavLink
-            to="/dashbord/manage-staff"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaUsers size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Manage Staff</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Manage Staff
-              </div>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/dashbord/manage-teacher"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaChalkboardTeacher size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Manage Teacher</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Manage Teacher
-              </div>
-            )}
-          </NavLink>
-          
-          <NavLink
-            to="/dashbord/manage-class"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaGraduationCap size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Manage Class</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Manage Class
-              </div>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/dashbord/manage-section"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaLayerGroup size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Manage Section</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Manage Section
-              </div>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/dashbord/manage-fees"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaRupeeSign  size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Manage Fees</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Manage Fees
-              </div>
-            )}
-          </NavLink>
-
-          <NavLink
-            to="/dashbord/mapping-fees"
-            className={menuClass}
-            onClick={closeSidebar}
-          >
-            <FaMapMarkedAlt size={isMobile ? 18 : 24} />
-            {open && <span className="font-medium text-sm">Mapping Fees</span>}
-            {!open && (
-              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                Mapping Fees
-              </div>
-            )}
-          </NavLink>
-
-          {/* Hostel Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setHostelDropdown(!hostelDropdown)}
-              className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium w-full text-left
-                text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102`}
+          {isPanelAllowed('staff') && (
+            <NavLink
+              to="/dashbord/manage-staff"
+              className={menuClass}
+              onClick={closeSidebar}
             >
-              <FaBed size={isMobile ? 18 : 24} />
-              {open && (
-                <>
-                  <span className="font-medium text-sm flex-1">Hostel</span>
-                  <FaChevronDown className={`transition-transform text-sm ${hostelDropdown ? 'rotate-180' : ''}`} />
-                </>
+              <FaUsers size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Manage Staff</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Manage Staff
+                </div>
               )}
-            </button>
-            
-            {hostelDropdown && open && (
-              <div className="ml-4 sm:ml-8 mt-2 space-y-1">
-                <NavLink to="/dashbord/hostel" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaHome size={isMobile ? 14 : 18} />
-                  Dashboard
-                </NavLink>
-                <NavLink to="/dashbord/hostel/create-hostel" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaBuilding size={isMobile ? 14 : 18} />
-                  Create Hostel
-                </NavLink>
-                <NavLink to="/dashbord/hostel/room-type-charges" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaRupeeSign size={isMobile ? 14 : 18} />
-                  Room Type & Charges
-                </NavLink>
-                <NavLink to="/dashbord/hostel/room" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaBed size={isMobile ? 14 : 18} />
-                  Room Management
-                </NavLink>
-                <NavLink to="/dashbord/hostel/warden" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaUserTie size={isMobile ? 14 : 18} />
-                  Warden Management
-                </NavLink>
-                <NavLink to="/dashbord/hostel/allocation" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaClipboardList size={isMobile ? 14 : 18} />
-                  Hostel Allocation
-                </NavLink>
-                <NavLink to="/dashbord/hostel/reports" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaChartBar size={isMobile ? 14 : 18} />
-                  Hostel Reports
-                </NavLink>
-              </div>
-            )}
-          </div>
+            </NavLink>
+          )}
 
-          {/* Transport Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setTransportDropdown(!transportDropdown)}
-              className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium w-full text-left
-                text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102`}
+          {isPanelAllowed('teacher') && (
+            <NavLink
+              to="/dashbord/manage-teacher"
+              className={menuClass}
+              onClick={closeSidebar}
             >
-              <FaBus size={isMobile ? 18 : 24} />
-              {open && (
-                <>
-                  <span className="font-medium text-sm flex-1">Transport</span>
-                  <FaChevronDown className={`transition-transform text-sm ${transportDropdown ? 'rotate-180' : ''}`} />
-                </>
+              <FaChalkboardTeacher size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Manage Teacher</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Manage Teacher
+                </div>
               )}
-            </button>
-            
-            {transportDropdown && open && (
-              <div className="ml-4 sm:ml-8 mt-2 space-y-1">
-                <NavLink to="/dashbord/transport" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaHome size={isMobile ? 14 : 18} />
-                  Dashboard
-                </NavLink>
-                <NavLink to="/dashbord/transport/vehicle" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaBus size={isMobile ? 14 : 18} />
-                  Vehicle Master
-                </NavLink>
-                <NavLink to="/dashbord/transport/driver" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaUserTie size={isMobile ? 14 : 18} />
-                  Driver Master
-                </NavLink>
-                <NavLink to="/dashbord/transport/route" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaMapMarkedAlt size={isMobile ? 14 : 18} />
-                  Route Master
-                </NavLink>
-                <NavLink to="/dashbord/transport/route-stops" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaClipboardList size={isMobile ? 14 : 18} />
-                  Route Stops
-                </NavLink>
-                <NavLink to="/dashbord/transport/route-charges" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaRupeeSign  size={isMobile ? 14 : 18} />
-                  Route Charges
-                </NavLink>
-                <NavLink to="/dashbord/transport/assignment" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaCog size={isMobile ? 14 : 18} />
-                  Transport Assignment
-                </NavLink>
-                <NavLink to="/dashbord/transport/allocation" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
-                  <FaUsers size={isMobile ? 14 : 18} />
-                  Transport Allocation
-                </NavLink>
-              </div>
-            )}
-          </div>
+            </NavLink>
+          )}
+
+          {isPanelAllowed('school') && (
+            <NavLink
+              to="/dashbord/manage-class"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaGraduationCap size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Manage Class</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Manage Class
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('school') && (
+            <NavLink
+              to="/dashbord/attendance"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaClipboardList size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Attendance</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Attendance
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('school') && (
+            <NavLink
+              to="/dashbord/timetable"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaCalendarAlt size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Timetable Builder</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Timetable Builder
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('school') && (
+            <NavLink
+              to="/dashbord/substitute-assignment"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaUserEdit size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Substitute Teacher</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Substitute Teacher
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('school') && (
+            <NavLink
+              to="/dashbord/manage-section"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaLayerGroup size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Manage Section</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Manage Section
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('fee') && (
+            <NavLink
+              to="/dashbord/manage-fees"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaRupeeSign size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Manage Fees</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Manage Fees
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('fee') && (
+            <NavLink
+              to="/dashbord/mapping-fees"
+              className={menuClass}
+              onClick={closeSidebar}
+            >
+              <FaMapMarkedAlt size={isMobile ? 18 : 24} />
+              {open && <span className="font-medium text-sm">Mapping Fees</span>}
+              {!open && (
+                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Mapping Fees
+                </div>
+              )}
+            </NavLink>
+          )}
+
+          {isPanelAllowed('warden') && (
+            <div className="relative">
+              <button
+                onClick={() => setHostelDropdown(!hostelDropdown)}
+                className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium w-full text-left
+                text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102`}
+              >
+                <FaBed size={isMobile ? 18 : 24} />
+                {open && (
+                  <>
+                    <span className="font-medium text-sm flex-1">Hostel</span>
+                    <FaChevronDown className={`transition-transform text-sm ${hostelDropdown ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+
+              {hostelDropdown && open && (
+                <div className="ml-4 sm:ml-8 mt-2 space-y-1">
+                  <NavLink to="/dashbord/hostel" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaHome size={isMobile ? 14 : 18} />
+                    Dashboard
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/create-hostel" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaBuilding size={isMobile ? 14 : 18} />
+                    Create Hostel
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/room-type-charges" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaRupeeSign size={isMobile ? 14 : 18} />
+                    Room Type & Charges
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/room" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaBed size={isMobile ? 14 : 18} />
+                    Room Management
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/warden" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaUserTie size={isMobile ? 14 : 18} />
+                    Warden Management
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/allocation" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaClipboardList size={isMobile ? 14 : 18} />
+                    Hostel Allocation
+                  </NavLink>
+                  <NavLink to="/dashbord/hostel/reports" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaChartBar size={isMobile ? 14 : 18} />
+                    Hostel Reports
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isPanelAllowed('transport') && (
+            <div className="relative">
+              <button
+                onClick={() => setTransportDropdown(!transportDropdown)}
+                className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-300 font-medium w-full text-left
+                text-white hover:text-white hover:bg-gradient-to-r hover:from-slate-700 hover:to-slate-600 hover:shadow-lg hover:scale-102`}
+              >
+                <FaBus size={isMobile ? 18 : 24} />
+                {open && (
+                  <>
+                    <span className="font-medium text-sm flex-1">Transport</span>
+                    <FaChevronDown className={`transition-transform text-sm ${transportDropdown ? 'rotate-180' : ''}`} />
+                  </>
+                )}
+              </button>
+
+              {transportDropdown && open && (
+                <div className="ml-4 sm:ml-8 mt-2 space-y-1">
+                  <NavLink to="/dashbord/transport" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaHome size={isMobile ? 14 : 18} />
+                    Dashboard
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/vehicle" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaBus size={isMobile ? 14 : 18} />
+                    Vehicle Master
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/driver" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaUserTie size={isMobile ? 14 : 18} />
+                    Driver Master
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/route" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaMapMarkedAlt size={isMobile ? 14 : 18} />
+                    Route Master
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/route-stops" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaClipboardList size={isMobile ? 14 : 18} />
+                    Route Stops
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/route-charges" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaRupeeSign size={isMobile ? 14 : 18} />
+                    Route Charges
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/assignment" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaCog size={isMobile ? 14 : 18} />
+                    Transport Assignment
+                  </NavLink>
+                  <NavLink to="/dashbord/transport/allocation" className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white hover:text-white hover:bg-slate-700 rounded-lg transition-all" onClick={closeSidebar}>
+                    <FaUsers size={isMobile ? 14 : 18} />
+                    Transport Allocation
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          )}
 
           <NavLink
             to="/dashbord/approval"
@@ -349,6 +417,20 @@ export default function MainDashBord() {
             {!open && (
               <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                 Profile
+              </div>
+            )}
+          </NavLink>
+
+          <NavLink
+            to="/dashbord/school-settings"
+            className={menuClass}
+            onClick={closeSidebar}
+          >
+            <FaCog size={isMobile ? 18 : 24} />
+            {open && <span className="font-medium text-sm">School Settings</span>}
+            {!open && (
+              <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                School Settings
               </div>
             )}
           </NavLink>
@@ -407,7 +489,10 @@ export default function MainDashBord() {
             </div>
 
             {/* Settings */}
-            <button className="p-2 sm:p-3 rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all hover:scale-105">
+            <button
+              onClick={() => navigate("/dashbord/school-settings")}
+              className="p-2 sm:p-3 rounded-xl sm:rounded-2xl hover:bg-slate-100 transition-all hover:scale-105"
+            >
               <FaCog size={isMobile ? 20 : 24} className="text-slate-600" />
             </button>
 
@@ -425,10 +510,10 @@ export default function MainDashBord() {
         hover:shadow-lg hover:scale-105 transition-all text-lg sm:text-xl overflow-hidden border border-white/50 shadow-inner"
               >
                 {user?.profileImage ? (
-                  <img 
-                    src={user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover" 
+                  <img
+                    src={user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   user?.email?.[0]?.toUpperCase() || "B"

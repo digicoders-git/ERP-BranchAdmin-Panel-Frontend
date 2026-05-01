@@ -108,6 +108,18 @@ export default function ClassView() {
                   </div>
                 </div>
 
+                {classData.classTeacher && (
+                  <div className="flex items-center gap-3 text-gray-700 md:col-span-2">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                      <FaUserTie className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Class Teacher</p>
+                      <p className="font-semibold">{classData.classTeacher.name} ({classData.classTeacher.email})</p>
+                    </div>
+                  </div>
+                )}
+
                 {classData.description && (
                   <div className="flex items-center gap-3 text-gray-700 md:col-span-2">
                     <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">

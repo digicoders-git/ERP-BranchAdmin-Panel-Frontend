@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import { FaChalkboardTeacher, FaPlus, FaFolder, FaTrash, FaEdit, FaEye, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaChalkboardTeacher, FaPlus, FaFolder, FaTrash, FaEdit, FaEye, FaUser, FaToggleOn, FaToggleOff, FaIdCard } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import IDCardPrint from './IDCardPrint';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -16,12 +17,14 @@ export default function ManageTeacher() {
   const [showForm, setShowForm] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
 
   const [currentSubject, setCurrentSubject] = useState('');
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', phone: '', address: '',
     qualification: '', experience: '', salary: '', subjects: [],
     assignedClass: '', assignedSection: '',
+    isClassTeacher: false,
     image: null, imagePreview: null
   });
   const [errors, setErrors] = useState({});
@@ -94,27 +97,61 @@ export default function ManageTeacher() {
     const errs = validate();
     if (Object.keys(errs).length) return setErrors(errs);
     setSubmitting(true);
-    try {
+
+    const submitData = async (forceReplace = false) => {
       const fd = new FormData();
+      // Append non-file fields first
       Object.entries(formData).forEach(([k, v]) => {
+        if (k === 'image' || k === 'imagePreview') return;
         if (k === 'subjects') fd.append(k, JSON.stringify(v));
         else if (k === 'phone') fd.append('mobile', v);
-        else if (k === 'image' && v) fd.append('profileImage', v);
         else if (k === 'assignedClass' && v) fd.append('assignedClass', v);
         else if (k === 'assignedSection' && v) fd.append('assignedSection', v);
-        else if (k !== 'imagePreview' && k !== 'image' && v !== null && v !== '') fd.append(k, v);
+        else if (k === 'isClassTeacher') fd.append('isClassTeacher', v ? 'true' : 'false');
+        else if (v !== null && v !== '') fd.append(k, v);
       });
+      
+      // Append file last
+      if (formData.image) fd.append('profileImage', formData.image);
+      if (forceReplace) fd.append('forceReplace', 'true');
+
       if (editingTeacher) {
         await api.put(`/api/teacher/update/${editingTeacher._id}`, fd);
-        Swal.fire({ icon: 'success', title: 'Teacher Updated!', timer: 1500, showConfirmButton: false });
       } else {
         await api.post('/api/teacher/create', fd);
-        Swal.fire({ icon: 'success', title: 'Teacher Added!', timer: 1500, showConfirmButton: false });
       }
+    };
+
+    try {
+      await submitData(false);
+      Swal.fire({ icon: 'success', title: editingTeacher ? 'Teacher Updated!' : 'Teacher Added!', timer: 1500, showConfirmButton: false });
       fetchTeachers();
       resetForm();
     } catch (err) {
-      Swal.fire('Error', err.response?.data?.message || 'Operation failed', 'error');
+      if (err.response?.status === 409 && err.response?.data?.conflict) {
+        const result = await Swal.fire({
+          title: 'Class Teacher Conflict',
+          text: err.response.data.message,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, Replace',
+          cancelButtonText: 'No, Keep existing'
+        });
+
+        if (result.isConfirmed) {
+          setSubmitting(true);
+          try {
+            await submitData(true);
+            Swal.fire({ icon: 'success', title: 'Teacher Updated!', timer: 1500, showConfirmButton: false });
+            fetchTeachers();
+            resetForm();
+          } catch (retryErr) {
+            Swal.fire('Error', retryErr.response?.data?.message || 'Operation failed', 'error');
+          }
+        }
+      } else {
+        Swal.fire('Error', err.response?.data?.message || 'Operation failed', 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -122,7 +159,7 @@ export default function ManageTeacher() {
 
   const resetForm = () => {
     setShowForm(false); setEditingTeacher(null); setCurrentSubject('');
-    setFormData({ name: '', email: '', password: '', phone: '', address: '', qualification: '', experience: '', salary: '', subjects: [], assignedClass: '', assignedSection: '', image: null, imagePreview: null });
+    setFormData({ name: '', email: '', password: '', phone: '', address: '', qualification: '', experience: '', salary: '', subjects: [], assignedClass: '', assignedSection: '', isClassTeacher: false, image: null, imagePreview: null });
     setErrors({});
   };
 
@@ -140,6 +177,7 @@ export default function ManageTeacher() {
       subjects: t.subjects || [], 
       assignedClass: t.assignedClass?._id || t.assignedClass || '',
       assignedSection: t.assignedSection?._id || t.assignedSection || '',
+      isClassTeacher: t.isClassTeacher || false,
       image: null, 
       imagePreview: t.profileImage ? (t.profileImage.startsWith('http') ? t.profileImage : `${BASE_URL.replace(/\/$/, '')}/${t.profileImage.replace(/\\/g, '/').replace(/^\//, '')}`) : null 
     });
@@ -244,29 +282,45 @@ export default function ManageTeacher() {
               <input type="number" placeholder="Monthly salary" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-500 bg-white text-sm" />
             </div>
 
-            {/* Assigned Class */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Assign Class</label>
-              <select value={formData.assignedClass} onChange={(e) => setFormData({ ...formData, assignedClass: e.target.value, assignedSection: '' })} className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-500 bg-white text-sm">
-                <option value="">Select Class</option>
-                {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
-              </select>
+            {/* Assigned Class & Section (Primary Class Teacher Role) */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <div className="md:col-span-3">
+                <h4 className="text-sm font-bold text-blue-800 flex items-center gap-2">
+                  <FaChalkboardTeacher /> Class Teacher Designation (Primary)
+                </h4>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Is Class Teacher?</label>
+                <div className="flex items-center gap-3 h-[46px]">
+                  <button type="button" onClick={() => setFormData({ ...formData, isClassTeacher: !formData.isClassTeacher })} className={`w-12 h-6 rounded-full p-1 transition-colors ${formData.isClassTeacher ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${formData.isClassTeacher ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                  </button>
+                  <span className="text-xs font-medium text-gray-500">{formData.isClassTeacher ? 'Yes' : 'No'}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Primary Class</label>
+                <select value={formData.assignedClass} onChange={(e) => setFormData({ ...formData, assignedClass: e.target.value, assignedSection: '' })} className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm" disabled={!formData.isClassTeacher}>
+                  <option value="">Select Class</option>
+                  {classes.map(c => <option key={c._id} value={c._id}>{c.className}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Primary Section</label>
+                <select value={formData.assignedSection} onChange={(e) => setFormData({ ...formData, assignedSection: e.target.value })} className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm" disabled={!formData.assignedClass}>
+                  <option value="">Select Section</option>
+                  {sections.filter(s => s.assignToClass?._id === formData.assignedClass || s.assignToClass === formData.assignedClass).map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
+                </select>
+              </div>
             </div>
 
-            {/* Assigned Section */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Assign Section</label>
-              <select value={formData.assignedSection} onChange={(e) => setFormData({ ...formData, assignedSection: e.target.value })} className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-500 bg-white text-sm" disabled={!formData.assignedClass}>
-                <option value="">Select Section</option>
-                {sections.filter(s => s.assignToClass?._id === formData.assignedClass || s.assignToClass === formData.assignedClass).map(s => <option key={s._id} value={s._id}>{s.sectionName}</option>)}
-              </select>
-            </div>
 
-            {/* Subjects */}
+
+            {/* Subjects Tags */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Teaching Subjects *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Global Skills/Subjects (Tags) *</label>
               <div className="flex gap-2 mb-2">
-                <input type="text" placeholder="Enter subject" value={currentSubject} onChange={(e) => setCurrentSubject(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSubject())} className="flex-1 border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-500 bg-white text-sm" />
+                <input type="text" placeholder="Enter subject and press Enter" value={currentSubject} onChange={(e) => setCurrentSubject(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSubject())} className="flex-1 border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-green-500 bg-white text-sm" />
                 <button type="button" onClick={addSubject} className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 text-sm font-semibold">Add</button>
               </div>
               {errors.subjects && <p className="text-red-500 text-xs mb-2">{errors.subjects}</p>}
@@ -321,6 +375,7 @@ export default function ManageTeacher() {
                           {t.profileImage ? <img src={t.profileImage.startsWith('http') ? t.profileImage : `${BASE_URL.replace(/\/$/, '')}/${t.profileImage.replace(/\\/g, '/').replace(/^\//, '')}`} alt={t.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-green-600 font-bold text-sm">{t.name?.[0]}</div>}
                         </div>
                         <span className="font-semibold text-gray-900 text-sm">{t.name}</span>
+                        {t.isClassTeacher && <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter shadow-sm">Class Teacher</span>}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-600">{t.email}</td>
@@ -338,9 +393,10 @@ export default function ManageTeacher() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(`/dashbord/teacher-profile/${t._id}`)} className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200"><FaEye /></button>
-                        <button onClick={() => handleEdit(t)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"><FaEdit /></button>
-                        <button onClick={() => handleDelete(t)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"><FaTrash /></button>
+                        <button onClick={() => navigate(`/dashbord/teacher-profile/${t._id}`)} className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200" title="View Profile"><FaEye /></button>
+                        <button onClick={() => setSelectedTeacher(t)} className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200" title="Print ID Card"><FaIdCard /></button>
+                        <button onClick={() => handleEdit(t)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200" title="Edit Teacher"><FaEdit /></button>
+                        <button onClick={() => handleDelete(t)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete Teacher"><FaTrash /></button>
                       </div>
                     </td>
                   </tr>
@@ -350,6 +406,7 @@ export default function ManageTeacher() {
           </div>
         )}
       </div>
+      {selectedTeacher && <IDCardPrint roleType="teacher" staffId={selectedTeacher._id} staffData={selectedTeacher} onClose={() => setSelectedTeacher(null)} />}
     </div>
   );
 }

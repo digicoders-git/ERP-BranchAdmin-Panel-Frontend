@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { showSuccess, showError, showConfirm, showToast, showWarning } from '../utils/sweetAlert';
-import { FaUsers, FaPlus, FaEdit, FaClipboardList } from 'react-icons/fa';
+import { FaUsers, FaPlus, FaEdit, FaClipboardList, FaSpinner } from 'react-icons/fa';
 import api from '../api';
 
 export default function TransportAllocation() {
@@ -24,6 +24,10 @@ export default function TransportAllocation() {
     joiningDate: '',
     status: 'active'
   });
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [verifiedUser, setVerifiedUser] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -127,6 +131,55 @@ export default function TransportAllocation() {
     }
   }, [formData.stop, routeCharges]);
 
+  // Handle Search for Students/Staff
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (formData.studentStaffName && !verifiedUser && formData.studentStaffName.length > 1) {
+        searchUsers();
+      } else {
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formData.studentStaffName, formData.userType]);
+
+  const searchUsers = async () => {
+    try {
+      setSearching(true);
+      let endpoint = '';
+      if (formData.userType === 'Student') {
+        endpoint = `/api/staff-panel/student/enrollment-list?search=${formData.studentStaffName}&limit=10`;
+      } else {
+        // Search across all staff roles
+        endpoint = `/api/staff-panel/staff-optimized/all?role=staff&search=${formData.studentStaffName}&limit=10`;
+      }
+      
+      const res = await api.get(endpoint);
+      const data = res.data.students || res.data.data || [];
+      setSearchResults(data);
+      setShowDropdown(data.length > 0);
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelectUser = (user) => {
+    const name = user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || user.wardenName || user.librarianName);
+    setFormData({
+      ...formData,
+      studentStaffName: name,
+      studentId: formData.userType === 'Student' ? user._id : undefined,
+      staffId: formData.userType !== 'Student' ? user._id : undefined
+    });
+    setVerifiedUser(user);
+    setSearchResults([]);
+    setShowDropdown(false);
+  };
+
   const handleAddAllocation = async () => {
     if (routes.length === 0) {
       await showWarning('Routes Required!', 'Please create routes and assignments first!');
@@ -143,8 +196,11 @@ export default function TransportAllocation() {
       monthlyCharge: '',
       pickupDrop: 'both',
       joiningDate: '',
-      status: 'active'
+      status: 'active',
+      studentId: '',
+      staffId: ''
     });
+    setVerifiedUser(null);
   };
 
   const handleSubmit = async (e) => {
@@ -166,7 +222,9 @@ export default function TransportAllocation() {
         monthlyCharges: parseInt(formData.monthlyCharge) || 0,
         service: formData.pickupDrop,
         joiningDate: formData.joiningDate || null,
-        status: formData.status === 'active'
+        status: formData.status === 'active',
+        studentId: formData.studentId,
+        staffId: formData.staffId
       };
 
       if (editingAllocation) {
@@ -198,8 +256,11 @@ export default function TransportAllocation() {
       monthlyCharge: allocation.monthlyCharges || '',
       pickupDrop: allocation.service || 'both',
       joiningDate: allocation.joiningDate ? allocation.joiningDate.split('T')[0] : '',
-      status: allocation.status === true || allocation.status === 'active' ? 'active' : 'inactive'
+      status: allocation.status === true || allocation.status === 'active' ? 'active' : 'inactive',
+      studentId: allocation.student?._id || allocation.student || '',
+      staffId: allocation.staff?._id || allocation.staff || ''
     });
+    if (allocation.student || allocation.staff) setVerifiedUser(allocation.student || allocation.staff);
     setShowForm(true);
   };
 
@@ -270,15 +331,55 @@ export default function TransportAllocation() {
             <h3 className="text-2xl font-bold text-gray-800">{editingAllocation ? 'Update Allocation' : 'Allocate Transport'}</h3>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="block text-sm font-bold text-gray-700 mb-2">Student / Staff Name *</label>
-              <input
-                type="text"
-                value={formData.studentStaffName}
-                onChange={(e) => setFormData({...formData, studentStaffName: e.target.value})}
-                className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-pink-500"
-                required
-              />
+              <div className="relative group">
+                <input
+                  type="text"
+                  placeholder="Type to search database..."
+                  value={formData.studentStaffName}
+                  onChange={(e) => {
+                    setFormData({...formData, studentStaffName: e.target.value});
+                    if (verifiedUser) setVerifiedUser(null);
+                  }}
+                  onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+                  className={`w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all ${verifiedUser ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-300'}`}
+                  required
+                />
+                {searching && (
+                  <div className="absolute right-4 top-[12px]">
+                    <FaSpinner className="animate-spin text-blue-500" />
+                  </div>
+                )}
+              </div>
+
+              {/* Autocomplete Dropdown */}
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl z-[100] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  {searchResults.map((user) => (
+                    <button
+                      key={user._id}
+                      type="button"
+                      onClick={() => handleSelectUser(user)}
+                      className="w-full px-5 py-3 text-left hover:bg-blue-50 border-b border-gray-50 last:border-0 flex items-center justify-between transition-colors group/item"
+                    >
+                      <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xs font-black uppercase">
+                            {(user.firstName || user.name || 'U').charAt(0)}
+                         </div>
+                         <div>
+                            <div className="text-sm font-bold text-gray-800 group-hover/item:text-blue-600 transition-colors">
+                              {user.firstName ? `${user.firstName} ${user.lastName}` : (user.name || user.wardenName || user.librarianName)}
+                            </div>
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              {formData.userType === 'Student' ? `${user.class?.className || 'N/A'} • ${user.admissionNumber || 'ID'}` : `${user.role || 'Staff'} • ${user.staffId || 'ID'}`}
+                            </div>
+                         </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div>

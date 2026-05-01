@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-import { FaUsers, FaPlus, FaCamera, FaFolder, FaTrash, FaInfoCircle, FaEdit, FaEye, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaUsers, FaPlus, FaCamera, FaFolder, FaTrash, FaInfoCircle, FaEdit, FaEye, FaUser, FaToggleOn, FaToggleOff, FaIdCard } from 'react-icons/fa';
 import { IoClose } from 'react-icons/io5';
 import api from '../api';
+import IDCardPrint from './IDCardPrint';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -13,6 +14,7 @@ export default function ManageStaff() {
   const [showForm, setShowForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState(null);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', mobile: '', address: '',
@@ -259,9 +261,10 @@ export default function ManageStaff() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(`/dashbord/staff-profile/${s._id}`)} className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200"><FaEye /></button>
-                        <button onClick={() => handleEdit(s)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"><FaEdit /></button>
-                        <button onClick={() => handleDelete(s)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"><FaTrash /></button>
+                        <button onClick={() => navigate(`/dashbord/staff-profile/${s._id}`)} className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200" title="View Profile"><FaEye /></button>
+                        <button onClick={() => setSelectedStaff(s)} className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200" title="Print ID Card"><FaIdCard /></button>
+                        <button onClick={(() => handleEdit(s))} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200" title="Edit Staff"><FaEdit /></button>
+                        <button onClick={() => handleDelete(s)} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Delete Staff"><FaTrash /></button>
                       </div>
                     </td>
                   </tr>
@@ -271,6 +274,8 @@ export default function ManageStaff() {
           </div>
         )}
       </div>
+
+      {selectedStaff && <IDCardPrint staffId={selectedStaff._id} staffData={selectedStaff} onClose={() => setSelectedStaff(null)} />}
     </div>
   );
 }
