@@ -68,8 +68,8 @@ export default function RouteCharges() {
     setSubmitting(true);
     try {
       const payload = {
-        route: formData.route,
-        stop: formData.stop,
+        routeId: formData.route,
+        routeStopId: formData.stop,
         monthlyCharge: formData.monthlyCharge,
         tripType: formData.tripType.toLowerCase(),
         effectiveFrom: formData.effectiveFromDate || null,

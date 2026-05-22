@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { showSuccess, showError, showConfirm, showToast, showWarning } from '../utils/sweetAlert';
 import { FaUsers, FaPlus, FaEdit, FaClipboardList, FaSpinner } from 'react-icons/fa';
 import api from '../api';
@@ -28,9 +28,20 @@ export default function TransportAllocation() {
   const [searching, setSearching] = useState(false);
   const [verifiedUser, setVerifiedUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchData = async () => {
@@ -134,11 +145,8 @@ export default function TransportAllocation() {
   // Handle Search for Students/Staff
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (formData.studentStaffName && !verifiedUser && formData.studentStaffName.length > 1) {
+      if (!verifiedUser) {
         searchUsers();
-      } else {
-        setSearchResults([]);
-        setShowDropdown(false);
       }
     }, 500);
 
@@ -159,7 +167,6 @@ export default function TransportAllocation() {
       const res = await api.get(endpoint);
       const data = res.data.students || res.data.data || [];
       setSearchResults(data);
-      setShowDropdown(data.length > 0);
     } catch (err) {
       console.error('Search error:', err);
     } finally {
@@ -331,18 +338,36 @@ export default function TransportAllocation() {
             <h3 className="text-2xl font-bold text-gray-800">{editingAllocation ? 'Update Allocation' : 'Allocate Transport'}</h3>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">User Type</label>
+              <select
+                value={formData.userType}
+                onChange={(e) => {
+                  setFormData({...formData, userType: e.target.value, studentStaffName: ''});
+                  setVerifiedUser(null);
+                }}
+                className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-pink-500"
+              >
+                <option value="Student">Student</option>
+                <option value="Staff">Staff</option>
+              </select>
+            </div>
+
+            <div className="relative" ref={dropdownRef}>
               <label className="block text-sm font-bold text-gray-700 mb-2">Student / Staff Name *</label>
               <div className="relative group">
                 <input
                   type="text"
-                  placeholder="Type to search database..."
+                  placeholder={`Search ${formData.userType}...`}
                   value={formData.studentStaffName}
                   onChange={(e) => {
                     setFormData({...formData, studentStaffName: e.target.value});
                     if (verifiedUser) setVerifiedUser(null);
                   }}
-                  onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+                  onFocus={() => { 
+                    setShowDropdown(true); 
+                    if (searchResults.length === 0) searchUsers();
+                  }}
                   className={`w-full border-2 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all ${verifiedUser ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-300'}`}
                   required
                 />
@@ -380,18 +405,6 @@ export default function TransportAllocation() {
                   ))}
                 </div>
               )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">User Type</label>
-              <select
-                value={formData.userType}
-                onChange={(e) => setFormData({...formData, userType: e.target.value})}
-                className="w-full border-2 border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-pink-500"
-              >
-                <option value="Student">Student</option>
-                <option value="Staff">Staff</option>
-              </select>
             </div>
             
             <div>

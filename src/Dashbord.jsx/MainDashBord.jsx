@@ -48,6 +48,8 @@ export default function MainDashBord() {
     return user?.allowedPanels?.includes(panelName) || false;
   };
 
+  const hasHostelAccess = user?.role === 'branchAdmin' || isPanelAllowed('warden') || isPanelAllowed('hostel');
+
   useEffect(() => {
     const handleProfileUpdate = () => {
       setUser(JSON.parse(localStorage.getItem("branchUser") || "{}"));
@@ -273,7 +275,7 @@ export default function MainDashBord() {
             </NavLink>
           )}
 
-          {isPanelAllowed('warden') && (
+          {hasHostelAccess && (
             <div className="relative">
               <button
                 onClick={() => setHostelDropdown(!hostelDropdown)}

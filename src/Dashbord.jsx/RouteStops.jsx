@@ -117,16 +117,11 @@ export default function RouteStops() {
         });
         showSuccess('Updated!', 'Route stop updated successfully');
       } else {
-        for (const stop of formData.stops) {
-          await api.post('/api/route-stop/add', {
-            route: formData.routeName,
-            stopName: stop.stopName,
-            stopOrder: stop.stopOrder,
-            pickupTime: stop.pickupTime || null,
-            dropTime: stop.dropTime || null,
-            status: formData.status === 'active'
-          });
-        }
+        await api.post('/api/route-stop/add', {
+          routeId: formData.routeName,
+          stops: formData.stops,
+          status: formData.status === 'active'
+        });
         showSuccess('Created!', `${formData.stops.length} route stops added successfully`);
       }
       

@@ -69,9 +69,9 @@ export default function TransportAssignment() {
     setSubmitting(true);
     try {
       const payload = {
-        vehicle: formData.vehicle,
-        driver: formData.driver,
-        route: formData.route,
+        vehicleId: formData.vehicle,
+        driverId: formData.driver,
+        routeId: formData.route,
         shift: formData.shift,
         fromDate: formData.fromDate || null,
         toDate: formData.toDate || null,
