@@ -49,6 +49,7 @@ export default function MainDashBord() {
   };
 
   const hasHostelAccess = user?.role === 'branchAdmin' || isPanelAllowed('warden') || isPanelAllowed('hostel');
+  const hasTransportAccess = user?.role === 'branchAdmin' || isPanelAllowed('transport');
 
   useEffect(() => {
     const handleProfileUpdate = () => {
@@ -326,7 +327,7 @@ export default function MainDashBord() {
             </div>
           )}
 
-          {isPanelAllowed('transport') && (
+          {hasTransportAccess && (
             <div className="relative">
               <button
                 onClick={() => setTransportDropdown(!transportDropdown)}
